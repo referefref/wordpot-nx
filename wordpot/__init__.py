@@ -3,8 +3,8 @@
 try:
     from flask import Flask
 except ImportError:
-    print "\n[X] Please install Flask:"
-    print "   $ pip install flask\n"
+    print("\n[X] Please install Flask:")
+    print("   $ pip install flask\n")
     exit()
 
 from optparse import OptionParser
@@ -18,6 +18,10 @@ import os
 # ---------------
 
 class RegexConverter(BaseConverter):
+    # Werkzeug 2.2+ matches each path segment separately unless a converter
+    # declares that it can match slashes (the subpath regexes below do)
+    part_isolating = False
+
     def __init__(self, url_map, *items):
         super(RegexConverter, self).__init__(url_map)
         self.regex = items[0]
@@ -50,7 +54,7 @@ def parse_options():
 
     (options, args) = parser.parse_args()
     
-    for opt, val in options.__dict__.iteritems():
+    for opt, val in options.__dict__.items():
         if val is not None:
             if opt in ['PLUGINS', 'THEMES']:
                 val = [ v.strip() for v in val.split(',') ] 
@@ -58,7 +62,7 @@ def parse_options():
 
 
 def check_options():
-    for k, v in REQUIRED_OPTIONS.iteritems():
+    for k, v in REQUIRED_OPTIONS.items():
         if k not in app.config:
             LOGGER.error('%s was not set. Falling back to default: %s', k, v)
             app.config[k] = v
@@ -77,7 +81,8 @@ app = Flask('wordpot')
 app.url_map.converters['regex'] = RegexConverter
 
 # Import config from file
-conffile = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../wordpot.conf')
+# WORDPOT_CONF (optional) points at another configuration file
+conffile = os.environ.get('WORDPOT_CONF') or os.path.join(os.path.abspath(os.path.dirname(__file__)), '../wordpot.conf')
 LOGGER.info('Loading conf file: %s', conffile)
 try:
     app.config.from_pyfile(conffile)
@@ -87,7 +92,7 @@ check_options()
 
 if app.config['HPFEEDS_ENABLED']:
     import hpfeeds
-    print 'Connecting to hpfeeds broker {}:{}'.format(app.config['HPFEEDS_HOST'], app.config['HPFEEDS_PORT'])
+    print('Connecting to hpfeeds broker {}:{}'.format(app.config['HPFEEDS_HOST'], app.config['HPFEEDS_PORT']))
     app.config['hpfeeds_client'] = hpfeeds.new(
         app.config['HPFEEDS_HOST'], 
         app.config['HPFEEDS_PORT'], 
@@ -96,7 +101,7 @@ if app.config['HPFEEDS_ENABLED']:
     )
     app.config['hpfeeds_client'].s.settimeout(0.01)
 else:
-    LOGGER.warn('hpfeeds is disabled')
+    LOGGER.warning('hpfeeds is disabled')
 
 
 # ------------------------

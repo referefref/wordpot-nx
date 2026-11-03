@@ -31,7 +31,7 @@ def commons(filename=None, ext=None):
         abort(404)
 
 @app.route('/wp-admin', methods=['GET', 'POST'])
-@app.route('/wp-admin<regex("\/.*"):subpath>', methods=['GET', 'POST'])
+@app.route(r'/wp-admin<regex("\/.*"):subpath>', methods=['GET', 'POST'])
 def admin(subpath='/'):
     """ Admin panel probing handler """
     origin = request.remote_addr
@@ -49,10 +49,12 @@ def admin(subpath='/'):
                 return render_template(p.outputs['template'], vars=p.outputs['template_vars'])
             return render_template(p.outputs['template'], vars={})
     
-    return redirect('wp-login.php')
+    # Werkzeug 2.1+ no longer turns a relative Location into an absolute URL; the
+    # original (Werkzeug 0.9) redirected to <site root>/wp-login.php, so do that here
+    return redirect(request.url_root + 'wp-login.php')
 
 @app.route('/wp-content/plugins/<plugin>', methods=['GET', 'POST'])
-@app.route('/wp-content/plugins/<plugin><regex("(\/.*)"):subpath>', methods=['GET', 'POST'])
+@app.route(r'/wp-content/plugins/<plugin><regex("(\/.*)"):subpath>', methods=['GET', 'POST'])
 def plugin(plugin, subpath='/'):
     """ Plugin probing handler """
     origin = request.remote_addr
@@ -77,7 +79,7 @@ def plugin(plugin, subpath='/'):
     return render_template(TEMPLATE, vars={})
 
 @app.route('/wp-content/themes/<theme>', methods=['GET', 'POST'])
-@app.route('/wp-content/themes/<theme><regex("(\/.*)"):subpath>', methods=['GET', 'POST'])
+@app.route(r'/wp-content/themes/<theme><regex("(\/.*)"):subpath>', methods=['GET', 'POST'])
 def theme(theme, subpath='/'):
     """ Theme probing handler """
     origin = request.remote_addr
